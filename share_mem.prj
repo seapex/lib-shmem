@@ -1,0 +1,26 @@
+[Project ID]
+Signature=UE Proj: v.1
+[Project Information]
+Use Relative Directory=1
+Relative to Project File=1
+Include Sub Directories=1
+Project Tagfile=U:\1.lib\shmem\tags.lst
+Project Wordfile=
+Filter=
+Create Tagfile=0
+Project TpFile=
+[Files]
+0=.\doc\
+1=.\common\
+2=CMakeLists.txt
+3=config.h.in
+4=License.txt
+5=.\61850\
+[Group]
+0=build
+[Files - build]
+0=build\my_cmake
+1=build\toolchain-larm.cmake
+2=build\toolchain-lx86.cmake
+3=build\toolchain-wx64.cmake
+4=build\toolchain-wx86.cmake
