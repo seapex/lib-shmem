@@ -11,7 +11,7 @@ message("SRC_LIST=${SRC_LIST}")
 
 #set (EXTRA_LIBS ${EXTRA_LIBS} pthread dl)
 # add the library
-add_library (${LIB_TARGET} SHARED ${SRC_LIST})
+add_library (${LIB_TARGET} STATIC ${SRC_LIST})
 target_link_libraries (${LIB_TARGET} ${EXTRA_LIBS})
 
 # Set the GCC Additional flags to use when compiling this target's sources

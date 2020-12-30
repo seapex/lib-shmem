@@ -2,9 +2,9 @@ cmake_minimum_required (VERSION 2.8)
 project (ShareMemory)
 
 # The version number.
-set (_VERSION_MAJOR 0)
+set (_VERSION_MAJOR 1)
 set (_VERSION_MINOR 0)
-set (_VERSION_PATCH 1)
+set (_VERSION_PATCH 5)
 
 if(CMAKE_C_COMPILER MATCHES "arm")
 	set (_ARCH_TYPE ARM)

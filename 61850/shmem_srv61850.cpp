@@ -75,7 +75,7 @@ Set share memory value under semaphore control
             idx -- logical device index
     Return: 0=success, <0=failure
 */
-int SafeSetShm(ShmemSvr61850 *p, SafeSetDataID dataid, void * value, int idx)
+int SafeSetShm(ShmemSvr61850 *p, SafeSetDataID dataid, const void *value, int idx)
 {
     int sem_num;
     char * pch;

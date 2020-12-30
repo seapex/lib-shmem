@@ -17,10 +17,9 @@ extern "C" {
 
 //共享内存接口命令
 typedef enum {
-    kNoneCmd = 0, kInitSGCB, kSelectActSG, kSelectEditSG, 
-    kConfEditSG, kManRcdWave, kColdReset,
-    kGetIPAddrs, kGetNetmask, kGetGateway,
-    kSetIPAddrs, kSetNetmask, kSetGateway, kPqmnVer, kLogin61850, kIdentify61850
+    kNoneCmd = 0, kInitSGCB, kSelectActSG, kSelectEditSG,
+    kConfEditSG, kManRcdWave, kColdReset, kProgUpdate,
+    kPqmnVer, kLogin61850, kIdentify61850,
 } shm_APICmd;
 
 typedef enum {
@@ -33,7 +32,8 @@ typedef enum {
     kAlmOddHRU, KAlmEvnHRU,     //奇次、偶次谐波含有率
     kAlmVLdintlimt,             //长期电压中断
     kAlmIUnblc,                 //电流不平衡
-    kAlmINegseq                 //负序电流
+    kAlmINegseq,                 //负序电流
+    kAlmTpEnd
 } AlmType;
 
 typedef enum {
@@ -53,8 +53,8 @@ typedef struct {
 	uint8_t lmt_type;       //limit type. 0=GB, 1=customization
 	uint16_t vdev_lmt[2];   //voltage deviation limit. uint:1/1000. [0-1]:positive,negative
 	uint16_t unblnc_lmt;    //voltage negtive unbalance limit. unit:1/1000. 
-	uint16_t negcmp_lmt;    //current negtive component limit. unit: A. 
-	uint16_t freq_lmt;      //frequency limit. unit:1/1000Hz
+	uint16_t negcmp_lmt;    //current negtive component limit. unit:0.1A. 
+	uint16_t freq_lmt[2];   //frequency limit. unit:0.001Hz. [0-1]:positive,negative
 	uint16_t pst_lmt;       //Pst limit. unit:0.01
 	uint16_t plt_lmt;       //Plt limit. unit:0.01
 	uint16_t uhrm_lmt[50];  //voltage harmonic limit. [0]:THDu; [1-49]:2~50 HRu limit. unit:1/1000. 
@@ -77,50 +77,23 @@ typedef struct {
 } SG4LD;
 
 typedef struct {
-    char happen;        //event happened. set 1 by pqm3mn, clear 0 by 61850 svr
-    char varstr;        //QVVR.VarStr.stVal -- Voltage event start
-    struct timeval str_time;   //QVVR.VarStr.t -- Start time of the Voltage event
-    char dipstr;        //QVVR.DipStr.stVal -- Dip event start
-    char swlstr;        //QVVR.SwlStr.stVal -- Swell event start
-    char intrstr;       //QVVR.IntrStr.stVal -- Interruption event start
-    char varend;        //QVVR.VarEnd.stVal -- Voltage event finished
-    struct timeval end_time;   //QVVR.VarEnd.t -- Finish time of the Voltage event
-    int32_t vva;            //QVVR.VVa.mag -- Maximum voltage transient value(primary),unit:10mV
-    int32_t vvatm;          //QVVR.VVaTm.mag -- Voltage transient duration, unit:ms
-    int32_t rvtcnt[30];     //QVVR.EvtCnt.hstVal[x] -- 暂态事件直方图计数
-} PqmQvvr;
+    float xStart;
+    float xEnd;
+    float yStart;
+    float yEnd;
+} CellType;
 
 typedef struct {
-    char happen;        //event happened. set 1 by pqm3mn, clear 0 by 61850 svr
-    struct timeval time;       //RDRE$RcdMade$t. Complete time
-    char rcdmade;       //RDRE$RcdMade$stVal. TRUE = disturbance recording complete
-    int32_t  fltnum;        //RDRE$FltNum$stVal. Fault number,此处用于区分不同录波文件的序号
-    struct timeval trig_time;  //RDRE$RcdTrg$t. Trigger time
-    char rcdtrg;        //RDRE$RcdTrg$stVal. Trigger recorder. External command to trigger recorder(TRUE)
-} PqmRdre;
-
-typedef struct {
-    char Alm_stVal[128];    //GGIO.Almxx.stVal . 0=false, 1=true
-    time_t Alm_t[128];      //GGIO.Almxx.t .
+    char Alm_stVal[kAlmTpEnd];    //GGIO.Almxx.stVal . 0=false, 1=true
+    time_t Alm_t[kAlmTpEnd];      //GGIO.Almxx.t .
 } PqmGgio;
 
 typedef struct {
-    char IVarStr_stVal;     //QITR.VarStr.stVal -- Current event start
-    struct timeval IVarStr_time;   //QITR.VarStr.t -- Start time of the current event
-    char IVarEnd_stVal;     //QITR.VarEnd.stVal -- Current event finished
-    struct timeval IVarEnd_time;   //QITR.VarEnd.t -- Finish time of the current event
-    int32_t MaxATrs;            //QITR.MaxATrs.mag -- Maximum current transient value,unit:uA
-    int32_t ATrsTm;             //QITR.ATrsTm.mag -- Current transient duration, unit:ms
-} PqmQitr;
-
-typedef struct {
-    char UVarStr_stVal;     //QVTR.VarStr.stVal -- Voltage event start
-    struct timeval UVarStr_time;   //QVTR.VarStr.t -- Start time of the Voltage event
-    char UVarEnd_stVal;     //QVTR.VarEnd.stVal -- Voltage event finished
-    struct timeval UVarEnd_time;   //QVTR.VarEnd.t -- Finish time of the Voltage event
-    int32_t MaxVTrs;            //QVTR.MaxVTrs.mag -- Maximum voltage transient value,unit:mV
-    int32_t VTrsTm;             //QVTR.VTrsTm.mag -- Voltage transient duration, unit:ms
-} PqmQvtr;
+    time_t on_time;     //LPHD$PwrUp$t
+    char pwr_on;        //LPHD$PwrUp$stVal
+    time_t off_time;    //LPHD$PwrDn$t
+    char pwr_off;       //LPHD$PwrDn$stVal
+} PqmLphd;
 
 typedef struct {
     time_t st_time;
@@ -137,24 +110,17 @@ typedef struct {
 } PqmMflk;
 
 typedef struct {
-    time_t on_time;     //LPHD$PwrUp$t
-    char pwr_on;        //LPHD$PwrUp$stVal
-    time_t off_time;    //LPHD$PwrDn$t
-    char pwr_off;       //LPHD$PwrDn$stVal
-} PqmLphd;
-
-typedef struct {
     time_t time;
     //HA
-    float ha[3][50];    //harmonic current rms.[0-2]:A-C, [0-49]:1-50
-    float haang[3][50]; //harmonic current angle. [0-2]:A-C, [0-49]:1-50. real only
+    float ha[3][51];    //harmonic current rms.[0-2]:A-C, [0-50]:0-50. unit:A
+    float haang[3][51]; //harmonic current angle. [0-2]:A-C, [1-50]:1-50. unit:degree
     //HPhV,HPPV
-    float hphv[3][50];  //harmonic voltage rms for phase to neutral. [0-2]:A-C, [0-49]:1-50
-    float hppv[3][50];  //harmonic voltage rms for phase to phase. [0-2]:AB-CA, [0-49]:1-50
-    float hvang[3][50]; //harmonic voltage angle. [0-2]:A-C, [0-49]:1-50. real only
+    float hphv[3][51];  //harmonic voltage rms for phase to neutral. [0-2]:A-C, [0-50]:0-50. unit:V
+    float hppv[3][51];  //harmonic voltage rms for phase to phase. [0-2]:AB-CA, [0-50]:0-50. unit:V
+    float hvang[3][51]; //harmonic voltage angle. [0-2]:A-C, [1-50]:1-50. real only. unit:degree
     //HR
-    float hrphv[3][49]; //harmonic ratio for phase to neutral. [0-2]:A-C, [0-48]:2-50. unit:%
-    float hrppv[3][49]; //harmonic ratio for phase to phase. [0-2]:AB-CA, [0-48]:2-50. unit:%
+    float hrphv[3][51]; //harmonic ratio for phase to neutral. [0-2]:A-C, [2-50]:2-50. unit:%
+    float hrppv[3][51]; //harmonic ratio for phase to phase. [0-2]:AB-CA, [2-50]:2-50. unit:%
     //THD
     float thda[3];      //current THD. [0-2]:A-C. unit:%
     float thdodda[3];   //current odd THD. [0-2]:A-C. unit:%
@@ -166,57 +132,131 @@ typedef struct {
     float thdoddppv[3]; //voltage odd THD for phase to phase. [0-2]:AB-CA. unit:%
     float thdevnppv[3]; //voltage even THD for phase to phase. [0-2]:AB-CA. unit:%
     //Harmonic power
-    float hw[4][50];    //[0-2]:A-C,all [0-49]:1-50
-    float hvar[4][50];  //[0-2]:A-C,all [0-49]:1-50
-    float hva[4][50];   //[0-2]:A-C,all [0-49]:1-50
-    float hpf[4][50];   //[0-2]:A-C,all [0-49]:1-50
+    float hw[4][51];    //[0-2]:A-C,all [0-50]:0-50. unit:W
+    float hvar[4][51];  //[0-2]:A-C,all [0-50]:0-50. unit:var
+    float hva[4][51];   //[0-2]:A-C,all [0-50]:0-50. unit:VA
+    float hpf[4][51];   //[0-2]:A-C,all [0-50]:0-50.
     //Total harmonic power    
-    float tothw[4];     //active power. [0-3]A-C,all
-    float tothvar[4];   //reactive power. [0-3]A-C,all
-    float tothva[4];    //apparent power. [0-3]A-C,all
+    float tothw[4];     //active power. [0-3]A-C,all. unit:W
+    float tothvar[4];   //reactive power. [0-3]A-C,all. unit:var
+    float tothva[4];    //apparent power. [0-3]A-C,all. unit:VA
     float tothpf[4];    //power factor. [0-3]A-C,all
     uint16_t q;
 } PqmMhai;
 
 typedef struct {
     time_t time;
-    float ha[3][50];    //interharmonic current rms.[0-2]:A-C, [0-49]:1-50
-    float hphv[3][50];  //interharmonic voltage rms for phase to neutral. [0-2]:A-C, [0-49]:1-50
-    float hppv[3][50];  //interharmonic voltage rms for phase to phase. [0-2]:A-C, [0-49]:1-50
-    float hrphv[3][50]; //interharmonic voltage HR for phase to neutral.[0-2]:A-C, [0-49]:0-49. unit:%
-    float hrppv[3][50]; //interharmonic voltage HR for phase to phase.[0-2]:AB-CA, [0-49]:0-49. unit:%
+    float ha[3][51];    //interharmonic current rms.[0-2]:A-C, [0-50]:0-50. unit:A
+    float hphv[3][51];  //interharmonic voltage rms for phase to neutral. [0-2]:A-C, [0-50]:0-50. unit:V
+    float hppv[3][51];  //interharmonic voltage rms for phase to phase. [0-2]:A-C, [0-50]:0-50. unit:V
+    float hrphv[3][51]; //interharmonic voltage HR for phase to neutral.[0-2]:A-C, [0-50]:0-50. unit:%
+    float hrppv[3][51]; //interharmonic voltage HR for phase to phase.[0-2]:AB-CA, [0-50]:0-50. unit:%
     uint16_t q;
 } PqmMhaiIntr;
 
 typedef struct {
     time_t time;        
+    float watt;     //Power. unit:kw
+    float amp;      //DC current rms. unit:A
+    float vol;      //DC voltage rms. unit:V
+    float vdev;     //voltage deviation. unit:%.
+    float ampavg;   //DC current average. unit:A
+    float volavg;   //DC voltage average. unit:V
+    uint16_t q;     //Quality
+} PqmMmdc;
+
+typedef struct {
+    time_t time;
     time_t hz_time;
-    float hz;           
-    float hzdev;        //Frequency deviation
-    float a_mag[3];     //current rms. [0-2]:A-C    
-    float phv_mag[3];   //voltage rms for phase to neutral. [0-2]:A-C
-    float ppv_mag[3];   //voltage rms for phase to phase. [0-2]:AB-CA
-    float phvdev[3];    //voltage deviation for phase to neutral. [0-2]:A-C
-    float ppvdev[3];    //voltage deviation for phase to phase. [0-2]:AB-CA
+    float hz;           //unit:Hz
+    float hzdev;        //Frequency deviation. unit:Hz
+    float a_mag[3];     //current rms. [0-2]:A-C. unit:A
+    float phv_mag[3];   //voltage rms for phase to neutral. [0-2]:A-C. unit:V
+    float ppv_mag[3];   //voltage rms for phase to phase. [0-2]:AB-CA. unit:V
+    float phvdev[3];    //voltage deviation for phase to neutral. [0-2]:A-C. unit:%
+    float ppvdev[3];    //voltage deviation for phase to phase. [0-2]:AB-CA. unit:%
     //power
-    float w[4];         //A-C,all
-    float var[4];       //A-C,all
-    float va[4];        //A-C,all
+    float w[4];         //A-C,all. unit:kW
+    float var[4];       //A-C,all. unit:kvar
+    float va[4];        //A-C,all. unit:kVA
     float pf[4];        //A-C,all
-    uint16_t hz_q;    //Quality of frequency
-    uint16_t q;       //Quality of frequency
+    uint16_t hz_q;      //Quality of frequency
+    uint16_t q;         //Quality
 } PqmMmxu;
 
 typedef struct {
+    time_t time;
+    float para[3][2];   //[0-2]:+LM,-LM,+L-L; [0-1]:coefficient,ratio. unit:%    
+    uint16_t q;
+} PqmMrpl;
+
+typedef struct {
     time_t time;    //MSQI$xxx$t
-    float seqa[3];  //MSQI$SeqA$cx$cVal$mag$f. pos-neg-zero
-    float imbnga;   //MSQI$ImbNgA$mag$f
-    float imbzroa;  //MSQI$ImbZroA$mag$f
-    float seqv[3];  //MSQI$SeqV$cx$cVal$mag$f. pos-neg-zero
-    float imbngv;   //MSQI$ImbNgV$mag$f
-    float imbzrov;  //MSQI$ImbZroV$mag$f
+    float seqa[3];  //MSQI$SeqA$cx$cVal$mag$f. pos-neg-zero, unit:A
+    float imbnga;   //MSQI$ImbNgA$mag$f. unit:%
+    float imbzroa;  //MSQI$ImbZroA$mag$f. unit:%
+    float seqv[3];  //MSQI$SeqV$cx$cVal$mag$f. pos-neg-zero, unit:V. U_b-U_u-ε; unit:V,V,%; for DC
+    float imbngv;   //MSQI$ImbNgV$mag$f. unit:%
+    float imbzrov;  //MSQI$ImbZroV$mag$f. unit:%
     uint16_t q;
 } PqmMsqi;
+
+typedef struct {
+    char IVarStr_stVal;     //QITR.VarStr.stVal -- Current event start
+    struct timeval IVarStr_time;   //QITR.VarStr.t -- Start time of the current event
+    char IVarEnd_stVal;     //QITR.VarEnd.stVal -- Current event finished
+    struct timeval IVarEnd_time;   //QITR.VarEnd.t -- Finish time of the current event
+    int32_t MaxATrs;            //QITR.MaxATrs.mag -- Maximum current transient value,unit:uA
+    int32_t ATrsTm;             //QITR.ATrsTm.mag -- Current transient duration, unit:ms
+} PqmQitr;
+
+typedef struct {
+    char happen;        //event happened. set 1 by pqm3mn, clear 0 by 61850 svr
+    char varstr;        //QRVC.VarStr.stVal -- RVC event start
+    struct timeval str_time;   //QRVC.VarStr.t -- Start time of the RVC event
+    char varend;        //QRVC.VarEnd.stVal -- RVC event finished
+    struct timeval end_time;    //QRVC.VarEnd.t -- Finish time of the RVC event
+    int32_t vva;        //QRVC.VVa.mag -- Umax, unit:%
+    int32_t vvatm;      //QRVC.VVaTm.mag -- RVC duration, unit:ms
+    int32_t vvadev;     //QRVC.MaxVVa.mag -- Uss, unit:%
+    //Event counter histogram
+    //int32_t rvtcnt[30];     //QVVR.EvtCnt.hstVal[..]
+    //CellType range[30];     //QVVR.EvtCnt.hstRangeC[..]
+} PqmQrvc;
+
+typedef struct {
+    char UVarStr_stVal;     //QVTR.VarStr.stVal -- Voltage event start
+    struct timeval UVarStr_time;   //QVTR.VarStr.t -- Start time of the Voltage event
+    char UVarEnd_stVal;     //QVTR.VarEnd.stVal -- Voltage event finished
+    struct timeval UVarEnd_time;   //QVTR.VarEnd.t -- Finish time of the Voltage event
+    int32_t MaxVTrs;            //QVTR.MaxVTrs.mag -- Maximum voltage transient value,unit:mV
+    int32_t VTrsTm;             //QVTR.VTrsTm.mag -- Voltage transient duration, unit:ms
+} PqmQvtr;
+
+typedef struct {
+    char happen;        //event happened. set 1 by pqm3mn, clear 0 by 61850 svr
+    char varstr;        //QVVR.VarStr.stVal -- Voltage event start
+    struct timeval str_time;   //QVVR.VarStr.t -- Start time of the Voltage event
+    char dipstr;        //QVVR.DipStr.stVal -- Dip event start
+    char swlstr;        //QVVR.SwlStr.stVal -- Swell event start
+    char intrstr;       //QVVR.IntrStr.stVal -- Interruption event start
+    char varend;        //QVVR.VarEnd.stVal -- Voltage event finished
+    struct timeval end_time;   //QVVR.VarEnd.t -- Finish time of the Voltage event
+    int32_t vva;            //QVVR.VVa.mag -- Maximum voltage transient value(primary),unit:10mV
+    int32_t vvatm;          //QVVR.VVaTm.mag -- Voltage transient duration, unit:ms
+    //Event counter histogram
+    //int32_t rvtcnt[30];     //QVVR.EvtCnt.hstVal[..]
+    //CellType range[30];     //QVVR.EvtCnt.hstRangeC[..]
+} PqmQvvr;
+
+typedef struct {
+    char happen;        //event happened. set 1 by pqm3mn, clear 0 by 61850 svr
+    struct timeval time;       //RDRE$RcdMade$t. Complete time
+    char rcdmade;       //RDRE$RcdMade$stVal. TRUE = disturbance recording complete
+    int32_t  fltnum;        //RDRE$FltNum$stVal. Fault number,此处用于区分不同录波文件的序号
+    struct timeval trig_time;  //RDRE$RcdTrg$t. Trigger time
+    char rcdtrg;        //RDRE$RcdTrg$stVal. Trigger recorder. External command to trigger recorder(TRUE)
+} PqmRdre;
 
 //共享内存数据区
 struct Data4LD {
@@ -224,18 +264,23 @@ struct Data4LD {
     PqmMsqi msqi_real;
     PqmMhai mhai_real;
     PqmMhaiIntr mhai_in_real;
+    PqmMmdc mmdc_real[3];            //[0-2]:+LM,-LM,+L-L or total for watt.
+    PqmMrpl mrpl_real;
     
-    PqmMmxu mmxu_stat[4];       //[0]=maximum, [1]=average, [2]=minimum, [3]=CP95
+    PqmMmxu mmxu_stat[4];           //[0-3]:maximum,average,minimum,CP95
     PqmMsqi msqi_stat[4];           //ditto
-    PqmMhai mhai_stat[4];       //ditto
+    PqmMhai mhai_stat[4];           //ditto
     PqmMhaiIntr mhai_in_stat[4];    //ditto
+    PqmMrpl mrpl_stat[4];           //ditto
+    PqmMmdc mmdc_stat[4][3];        //ditto. [0-2]:+LM,-LM,+L-L;
     
     PqmLphd lphd;
     PqmGgio ggio;
     PqmMflk mflk;
     PqmQitr qitr;
+    PqmQrvc qrvc;
     PqmQvtr qvtr;
-    PqmQvvr qvvr;
+    PqmQvvr qvvr[4];    //[0-3]:A-C, Whole
     PqmRdre rdre;
     
     //char flicker_ok;
@@ -244,27 +289,30 @@ struct Data4LD {
     char ggio_ok;
     char qvvr_ok;
     char rdre_ok;
-    
-    char MonitorPoint[65]; //监测点名称
+    char qrvc_ok;
+    char res1[4];   //reserve
+    char MonitorPoint[68]; //monitor point name
     char LDName[16];
     char brcb_up;   //statistic data has update. increased by pqm3mn, decreased by 61850
     char urcb_up;   //realtime data has update. increased by pqm3mn, decreased by 61850
     uint16_t debug_var; //varialbes for debug
-    char reserve[24];   //[25]
+    char pst_up;   //Pst data has update. increased by dpqnet_mn, changed by dpqnet_mn only
+    char plt_up;   //Plt data has update. increased by dpqnet_mn, changed by dpqnet_mn only
+    char reserve[22];
 };
 
 //共享内存数据区
 struct ShmemSvr61850 {
-    LDChnnlInfo ld_chnl[kChannelTol];
     Data4LD ld_data[kChannelTol];
-    char StationName[65];  // 变电站名称
+    char StationName[68];  //substation name
     char IEDName[16];
-    uint16_t quit_cmd; //31729=quit
-    char security_en;    //Information security enable. 0=disable, 1=enable
-    char reserve[24];   //[25]
-    shm_APICmd request_cmd;  //Request command from 61850 Server
-    shm_APICmd response_cmd; //Reaponse command from pqm3mn
-    int32_t resp_rec_num; //返回的记录数量
+    char ver_inf[24];   //61850 service version information.
+    uint16_t quit_cmd;  //31729=quit
+    char reserve[62];
+    
+    shm_APICmd request_cmd; //Request command from 61850 Server
+    shm_APICmd response_cmd;//Response command from pqm3mn
+    int32_t resp_rec_num;   //Response command size in bytes
     uint8_t data[1024];
 };
 
@@ -282,7 +330,7 @@ Set share memory value under semaphore control
             idx -- logical device index
     Return: 0=success, <0=failure
 */
-int32_t SafeSetShm(ShmemSvr61850 *p, SafeSetDataID dataid, void * value, int32_t idx);
+int32_t SafeSetShm(ShmemSvr61850 *p, SafeSetDataID dataid, const void *value, int32_t idx);
 
 /*!
 Send cmd to share memory in safe mode
@@ -296,35 +344,30 @@ Send cmd to share memory in safe mode
 */
 int32_t shm_SendCmd(ShmemSvr61850 *p, shm_APICmd cmd, void *reqst, int32_t size, void *resp);
 /* \brief Function shm_SendCmd(...) command list
-cmd             reqst                   size            resp                                    return
--------------   ----------------------  ------          -----------------------------------     ------------------
-kInitSGCB       NULL                    0               uint8_t[5]. [0]:total number of sg,     5
-                                                                    [1]:LD0 active sg,
-                                                                    [2]:LD0 edit sg,
-                                                                    [3]:LD1-n active sg,
-                                                                    [4]:LD1-n edit sg
-kSelectActSG    [0]:0=ParamPHD,1=SG4LD  3               ParamPHD or SG4LD                       sizeof()
-kSelectEditSG   [1]:which sg                  
-                [2]:index of LD. 
-                    0=LD1,1=LD2..
-kConfEditSG     [0]:0=ParamPHD,1=SG4LD  3               if (act_sg!=edit_sg) NULL;              0
-                [1]:index of LD.                        else ParamPHD or SG4LD;                 sizeof()
-                    0=LD1,1=LD2..
-kManRcdWave     [0]:index of LD.        2               none                                    0
-                    0=LD1,1=LD2..
-                [1]:1=start, 0=end
-
-
-kGetIPAddrs     NULL                    0               char *ip. e.g."192.168.1.100"           strlen(ip)+1
-kGetNetmask     NULL                    0               char *netmask. e.g."255.0.0.0"          strlen(netmask)+1
-kGetGateway     NULL                    0               char *gateway. e.g."192.168.1.1"        strlen(gateway)+1
-kSetIPAddrs     char *ip                strlen(ip)+1    none                                    ignore
-kSetNetmask     char *netmask           strlen(ip)+1    none                                    ignore
-kSetGateway     char *gateway           strlen(ip)+1    none                                    ignore
-kPqmnVer        NULL                    0               char *ver. e.g."3.7.3_44"               strlen(ver)+1
-kColdReset      NULL                    0               none                                    ignore
-kLogin61850     uint32_t[4]             16              0=passed, 1=refused                     1
-kIdentify61850  uint32_t[4]             16              0=passed, 1=refused                     1
+cmd             reqst                           size            resp                                    return
+-------------   ----------------------          ------          -----------------------------------     ------------------
+kInitSGCB       NULL                            0               uint8_t[5]. [0]:total number of sg,     5
+                                                                            [1]:LD0 active sg,
+                                                                            [2]:LD0 edit sg,
+                                                                            [3]:LD1-n active sg,
+                                                                            [4]:LD1-n edit sg
+kSelectActSG &  uint8_t[0]:0=ParamPHD,1=SG4LD   3               ParamPHD or SG4LD                       sizeof()
+kSelectEditSG   uint8_t[1]:which sg                  
+                uint8_t[2]:index of LD. 
+                           0=LD1,1=LD2..
+kConfEditSG     uint8_t[0]:0=ParamPHD,1=SG4LD   2+sizeof()      if (act_sg!=edit_sg) NULL;              0
+                uint8_t[1]:index of LD.                         else ParamPHD or SG4LD;                 sizeof()
+                           0=LD1,1=LD2..
+                ParamPHD or SG4LD
+kManRcdWave     uint8_t[0]:index of LD.         2               none                                    0
+                           0=LD1,1=LD2..
+                uint8_t[1]:1=start, 0=end
+kPqmnVer        NULL                            0               char *ver_date.                         strlen(ver_date)+1
+                                                                    e.g."0.4.20_20191211_0936"
+kColdReset      NULL                            0               none                                    0
+kLogin61850     uint32_t[4]                     16              0=passed, 1=refused                     1
+kIdentify61850  uint32_t[4]                     16              0=passed, 1=refused                     1
+kProgUpdate     NULL                            0               none                                    0
 */
 
 #ifdef __cplusplus
