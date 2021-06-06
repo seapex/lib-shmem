@@ -132,10 +132,10 @@ typedef struct {
     float thdoddppv[3]; //voltage odd THD for phase to phase. [0-2]:AB-CA. unit:%
     float thdevnppv[3]; //voltage even THD for phase to phase. [0-2]:AB-CA. unit:%
     //Harmonic power
-    float hw[4][51];    //[0-2]:A-C,all [0-50]:0-50. unit:W
-    float hvar[4][51];  //[0-2]:A-C,all [0-50]:0-50. unit:var
-    float hva[4][51];   //[0-2]:A-C,all [0-50]:0-50. unit:VA
-    float hpf[4][51];   //[0-2]:A-C,all [0-50]:0-50.
+    float hw[4][51];    //[0-3]:A-C,all [0-50]:0-50. unit:W
+    float hvar[4][51];  //[0-3]:A-C,all [0-50]:0-50. unit:var
+    float hva[4][51];   //[0-3]:A-C,all [0-50]:0-50. unit:VA
+    float hpf[4][51];   //[0-3]:A-C,all [0-50]:0-50.
     //Total harmonic power    
     float tothw[4];     //active power. [0-3]A-C,all. unit:W
     float tothvar[4];   //reactive power. [0-3]A-C,all. unit:var
