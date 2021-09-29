@@ -27,6 +27,6 @@ set_property(TARGET ${LIB_TARGET} PROPERTY LINK_FLAGS -static-libgcc)
 #              ${PROJECT_BINARY_DIR}/bin )
 
 # add the install targets
-set(BIN2DES /home/works/emctrl/main/lib)
+set(BIN2DES /home/works/emctrl/1.lib)
 install (TARGETS ${LIB_TARGET} DESTINATION ${BIN2DES})
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/share_mem.h DESTINATION ${BIN2DES})

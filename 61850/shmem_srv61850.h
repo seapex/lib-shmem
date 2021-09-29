@@ -192,10 +192,10 @@ typedef struct {
 
 typedef struct {
     time_t time;    //MSQI$xxx$t
-    float seqa[3];  //MSQI$SeqA$cx$cVal$mag$f. pos-neg-zero, unit:A
+    float seqa[3];  //MSQI$SeqA$cx$cVal$mag$f. zero-pos-neg, unit:A
     float imbnga;   //MSQI$ImbNgA$mag$f. unit:%
     float imbzroa;  //MSQI$ImbZroA$mag$f. unit:%
-    float seqv[3];  //MSQI$SeqV$cx$cVal$mag$f. pos-neg-zero, unit:V. U_b-U_u-ε; unit:V,V,%; for DC
+    float seqv[3];  //MSQI$SeqV$cx$cVal$mag$f. zero-pos-neg, unit:V. U_b-U_u-ε; unit:V,V,%; for DC
     float imbngv;   //MSQI$ImbNgV$mag$f. unit:%
     float imbzrov;  //MSQI$ImbZroV$mag$f. unit:%
     uint16_t q;
@@ -308,7 +308,8 @@ struct ShmemSvr61850 {
     char IEDName[16];
     char ver_inf[24];   //61850 service version information.
     uint16_t quit_cmd;  //31729=quit
-    char reserve[62];
+    uint8_t ld_stat;    //LDx state. bit0-kChannelTol:LD1-kChannelTol. 0=nil
+    char reserve[61];
     
     shm_APICmd request_cmd; //Request command from 61850 Server
     shm_APICmd response_cmd;//Response command from pqm3mn
