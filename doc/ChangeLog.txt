@@ -1,4 +1,8 @@
 share_mem
++--------- V1.0.6 --------------------+
+2022-10-21
+  1. 修改 shmem_srv61850.h, 更改了 struct SG4LD.
+
 +--------- V1.0.5 --------------------+
 2020-12-09
   1. 修改 shmem_srv61850.h, 增加 struct PqmMrpl PqmQrvc PqmMmdc.

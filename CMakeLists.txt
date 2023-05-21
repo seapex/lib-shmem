@@ -4,7 +4,7 @@ project (ShareMemory)
 # The version number.
 set (_VERSION_MAJOR 1)
 set (_VERSION_MINOR 0)
-set (_VERSION_PATCH 5)
+set (_VERSION_PATCH 6)
 
 if(CMAKE_C_COMPILER MATCHES "arm")
 	set (_ARCH_TYPE ARM)
@@ -15,7 +15,6 @@ add_definitions(-D${_ARCH_TYPE})
 
 macro (add_sources)
     file (RELATIVE_PATH _relPath "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_LIST_DIR}")
-    message("ARGN=${ARGN}")
     foreach (_src ${ARGN})
         if (_relPath)
             list (APPEND SRC_LIST "${_relPath}/${_src}")
@@ -23,9 +22,6 @@ macro (add_sources)
             list (APPEND SRC_LIST "${_src}")
         endif()
     endforeach()
-    if (_relPath) # propagate SRC_LIST to parent directory
-        set (SRC_LIST ${SRC_LIST} PARENT_SCOPE)
-    endif()
 endmacro()
 
 # configure a header file to pass some of the CMake settings
@@ -39,9 +35,10 @@ configure_file (
 # so that we will find TutorialConfig.h
 include_directories ("${PROJECT_BINARY_DIR}")
 
-# add the src/ to the search path for src files
-add_subdirectory (61850)
+# add the 61850/ common/ test/ to the search path for src files
 add_subdirectory (common)
+add_subdirectory (61850)
+add_subdirectory (test)
 
 # build a CPack driven installer package
 include (InstallRequiredSystemLibraries)

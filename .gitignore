@@ -34,3 +34,6 @@
 tags.lst
 *.in
 build/larm
+build/*x86
+build/w32
+build/w64

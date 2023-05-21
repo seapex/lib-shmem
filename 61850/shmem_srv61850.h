@@ -8,7 +8,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdint.h>
-#include "stdint.h"
+#include <stdint.h>
 #include "param_phd.h"
 
 #ifdef __cplusplus
@@ -46,11 +46,11 @@ typedef enum {
 } SafeSetDataID;
 
 typedef struct {
-    uint32_t pt[2];  //Potential Transformer. [0-1]:primary,secondary. unit:V
-    uint32_t ct[2];  //Current Transformer.   [0-1]:primary,secondary. unit:A
+  	uint16_t version;       //The version of definition of this struct
 	uint8_t ulevel;         //voltage level. 0=380V, 1=6kV, 2=10kV, 3=35kV, 4=110kV, 5=220kV, 6=330kV, 7=500kV
 	uint8_t connect_type;   //voltage connect type. 0=wye, 1=delta
-	uint8_t lmt_type;       //limit type. 0=GB, 1=customization
+    uint32_t pt[2];  //Potential Transformer. [0-1]:primary,secondary. unit:V
+    uint32_t ct[2];  //Current Transformer.   [0-1]:primary,secondary. unit:A
 	uint16_t vdev_lmt[2];   //voltage deviation limit. uint:1/1000. [0-1]:positive,negative
 	uint16_t unblnc_lmt;    //voltage negtive unbalance limit. unit:1/1000. 
 	uint16_t negcmp_lmt;    //current negtive component limit. unit:0.1A. 
@@ -59,21 +59,29 @@ typedef struct {
 	uint16_t plt_lmt;       //Plt limit. unit:0.01
 	uint16_t uhrm_lmt[50];  //voltage harmonic limit. [0]:THDu; [1-49]:2~50 HRu limit. unit:1/1000. 
 	uint16_t ihrm_lmt[50];  //current harmonic limit. [0]:reserve; [1-49]:2~50 amplitude limit. unit:1/10A.
+ 	uint8_t lmt_type;       //limit type. 0=GB, 1=customization
+	uint8_t fluct_en;       //Fluctuation measurement enable. bit0-2:A-C
 	uint16_t fluct_db;      //Fluctuation deadband, unit:0.001/%
-	uint16_t fluct_en;      //Fluctuation measurement enable. bit0-2:A-C
 	
-	uint8_t rvce_en;     //rapid voltage change event monitor enable
-	uint8_t rvce_rate_en;    //rate of voltage change event monitor enable
-    uint16_t rvce_limit[3];  //limit of rvce. [0-2]:swell,dip,interrupt. unit:1/1000
-	uint16_t rvce_rate_lmt[2];   //limit of rate of change. [0-1]:high,low. unit:1/1000
-	uint8_t rcce_en;     //rapid current change event monitor enable
-	uint8_t rcce_rate_en;    //rate of current change event monitor enable
-    uint16_t rcce_limit;    //limit of rcce. swell. unit:1/1000
-	uint16_t rcce_rate_lmt;   //limit of rate of change. Starting current. unit:1/1000
+    float capacity[3];      //[0-2]:minimum short circuit, equipment supply, user agreement. unit:MVA
+	
+    uint8_t evnt_en;        //transient event monitor enable. bit0-2:A-C
+	uint8_t rvc_en;         //rvc event monitor enable. bit0-2:A-C
+    uint16_t evnt_limit[3]; //limit of transient event. [0-2]:swell,dip,interrupt. unit:1/1000.
+	uint16_t rvc_lmt;       //limit of rvc. unit:1/1000.
 
-	float capacity[3];  //[0-2]:minimum short circuit, equipment supply, user agreement. unit:MVA
-
-	char reserve[55];
+    uint8_t dc_topo;        //DC topology. 0=bipolar, 1=unipolar, 2=pseudo-bipolar
+    uint8_t ac_dc;          //0=AC, 1=DC
+	uint16_t evnt_rate_lmt[2];  //limit of rate of change. [0-1]:high,low. unit:1/1000.
+	uint8_t evnt_rate_en;   //rate of change event monitor enable. bit0-2:A-C
+    uint8_t attntr;         //Signal attenuator, only for voltage channel. 0=none, 1=2X, 2=3X.
+    
+    int16_t ang_crct[3];    //Phase angle correct. unit: 0.1degree, range:(-1800,1800)
+	uint16_t ievnt_limit;   //limit of current transient event. unit:1/1000.
+	uint16_t ievnt_rate_lmt;    //limit of rate of current change. unit:1/1000.
+	uint8_t ievnt_en;       //rate of change event monitor enable. bit0-2:A-C
+	uint8_t ievnt_rate_en;      //rate of current change event monitor enable. bit0-2:A-C
+	char reserve[102];
 } SG4LD;
 
 typedef struct {
@@ -216,9 +224,9 @@ typedef struct {
     struct timeval str_time;   //QRVC.VarStr.t -- Start time of the RVC event
     char varend;        //QRVC.VarEnd.stVal -- RVC event finished
     struct timeval end_time;    //QRVC.VarEnd.t -- Finish time of the RVC event
-    int32_t vva;        //QRVC.VVa.mag -- Umax, unit:%
+    int32_t vva;        //QRVC.VVa.mag -- Umax, unit:10mV
     int32_t vvatm;      //QRVC.VVaTm.mag -- RVC duration, unit:ms
-    int32_t vvadev;     //QRVC.MaxVVa.mag -- Uss, unit:%
+    int32_t vvadev;     //QRVC.MaxVVa.mag -- Uss, unit:10mV
     //Event counter histogram
     //int32_t rvtcnt[30];     //QVVR.EvtCnt.hstVal[..]
     //CellType range[30];     //QVVR.EvtCnt.hstRangeC[..]
@@ -286,10 +294,10 @@ struct Data4LD {
     //char flicker_ok;
     //char lphd_ok;
     //char statistic_ok;
-    char ggio_ok;
-    char qvvr_ok;
-    char rdre_ok;
-    char qrvc_ok;
+    char ggio_ok;   //set 1 by pqm3mn, clear 0 by 61850 svr
+    char qvvr_ok;   //set 1 by pqm3mn, clear 0 by 61850 svr
+    char rdre_ok;   //set 1 by pqm3mn, clear 0 by 61850 svr
+    char qrvc_ok;   //set 1 by pqm3mn, clear 0 by 61850 svr
     char res1[4];   //reserve
     char MonitorPoint[68]; //monitor point name
     char LDName[16];
@@ -352,7 +360,7 @@ kInitSGCB       NULL                            0               uint8_t[5]. [0]:
                                                                             [2]:LD0 edit sg,
                                                                             [3]:LD1-n active sg,
                                                                             [4]:LD1-n edit sg
-kSelectActSG &  uint8_t[0]:0=ParamPHD,1=SG4LD   3               ParamPHD or SG4LD                       sizeof()
+kSelectActSG &  uint8_t[0]:0=ParamPHD,1=SG4LD   3               ParamPhD or SG4LD                       sizeof()
 kSelectEditSG   uint8_t[1]:which sg                  
                 uint8_t[2]:index of LD. 
                            0=LD1,1=LD2..

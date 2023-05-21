@@ -29,7 +29,8 @@ struct ShmemSV61850 {
 
     uint16_t quit_cmd; //31729=quit
     uint16_t debug_var; //varialbes for debug
-    uint32_t reserve[25];
+    uint8_t param_cnt;   //svx parameter changed count. changed by dpqnet_mn only
+    uint8_t reserve[99];
     uint16_t request_cmd;  //Request command from 61850 Server
     uint16_t response_cmd; //Reaponse command from pqm3mn
     uint32_t resp_rec_num; //返回的记录数量
