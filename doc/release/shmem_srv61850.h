@@ -59,7 +59,7 @@ typedef struct {
 	uint16_t plt_lmt;       //Plt limit. unit:0.01
 	uint16_t uhrm_lmt[50];  //voltage harmonic limit. [0]:THDu; [1-49]:2~50 HRu limit. unit:1/1000. 
 	uint16_t ihrm_lmt[50];  //current harmonic limit. [0]:reserve; [1-49]:2~50 amplitude limit. unit:1/10A.
- 	uint8_t lmt_type;       //limit type. 0=GB, 1=customization
+ 	uint8_t ulmt_type;      //voltage harmonic limit type. 0=GB, 1=customization
 	uint8_t fluct_en;       //Fluctuation measurement enable. bit0-2:A-C
 	uint16_t fluct_db;      //Fluctuation deadband, unit:0.001/%
 	
@@ -76,12 +76,12 @@ typedef struct {
 	uint8_t evnt_rate_en;   //rate of change event monitor enable. bit0-2:A-C
     uint8_t attntr;         //Signal attenuator, only for voltage channel. 0=none, 1=2X, 2=3X.
     
-    int16_t ang_crct[3];    //Phase angle correct. unit: 0.1degree, range:(-1800,1800)
 	uint16_t ievnt_limit;   //limit of current transient event. unit:1/1000.
 	uint16_t ievnt_rate_lmt;    //limit of rate of current change. unit:1/1000.
 	uint8_t ievnt_en;       //rate of change event monitor enable. bit0-2:A-C
-	uint8_t ievnt_rate_en;      //rate of current change event monitor enable. bit0-2:A-C
-	char reserve[102];
+	uint8_t ievnt_rate_en;  //rate of current change event monitor enable. bit0-2:A-C
+ 	uint8_t ilmt_type;      //current harmonic limit type. 0=GB, 1=customization
+	char reserve[107];
 } SG4LD;
 
 typedef struct {
@@ -360,14 +360,14 @@ kInitSGCB       NULL                            0               uint8_t[5]. [0]:
                                                                             [2]:LD0 edit sg,
                                                                             [3]:LD1-n active sg,
                                                                             [4]:LD1-n edit sg
-kSelectActSG &  uint8_t[0]:0=ParamPHD,1=SG4LD   3               ParamPhD or SG4LD                       sizeof()
+kSelectActSG &  uint8_t[0]:0=ParamPhD,1=SG4LD   3               ParamPhD or SG4LD                       sizeof()
 kSelectEditSG   uint8_t[1]:which sg                  
                 uint8_t[2]:index of LD. 
                            0=LD1,1=LD2..
-kConfEditSG     uint8_t[0]:0=ParamPHD,1=SG4LD   2+sizeof()      if (act_sg!=edit_sg) NULL;              0
-                uint8_t[1]:index of LD.                         else ParamPHD or SG4LD;                 sizeof()
+kConfEditSG     uint8_t[0]:0=ParamPhD,1=SG4LD   2+sizeof()      if (act_sg!=edit_sg) NULL;              0
+                uint8_t[1]:index of LD.                         else ParamPhD or SG4LD;                 sizeof()
                            0=LD1,1=LD2..
-                ParamPHD or SG4LD
+                ParamPhD or SG4LD
 kManRcdWave     uint8_t[0]:index of LD.         2               none                                    0
                            0=LD1,1=LD2..
                 uint8_t[1]:1=start, 0=end
