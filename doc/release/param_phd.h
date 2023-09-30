@@ -99,7 +99,8 @@ struct ParamPhD {   //Physical Device parameter
 	int16_t pr_dly_cnt;     //Fine-tune the time of the rising edge of the IRIG-B Pr code
 	int8_t b_dbg_mode;      //IRIG-B output debug mode
     uint8_t rvc_wav_ena;    //RVC record wave enable. 0=disable, 1=enable
-    uint8_t dc_evnt_val;    //DC transient event value type. 0=20ms rms, 1=20ms average, 2=10ms average
+    uint8_t dc_val_type;    //bit7~4. DC value type. 0=average, 1=rms.
+                            //bit3~0. DC transient event value type. 0=20ms rms, 1=20ms average, 2=10ms average
     uint8_t st_tm_alg;      //Statistic data timestamp alignment. 0=no, 1=yes
     ScheduleRecWv schdl_recwv[4];   //Scheduled wave recording parameter
     uint16_t cvt_prl_res;   //Ratio of resistor impedance to capacitor reactance at 50Hz in RC parallel circute.

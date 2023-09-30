@@ -43,8 +43,33 @@ void SelectSG(void *resp, uint8_t type, uint8_t sgt, uint8_t sg_id, uint8_t ldx)
     printf("Select %s %s SG %d.", kTypeName[type], kSGTypeName[sgt], sg_id);
     if (type) { //SG4LD
         par_ld = (SG4LD*)resp;
-        printf(" LD%d\n", ldx+1);
-        printf("vdev_lmt=%d,%d; freq_lmt=%d,%d\n", par_ld->vdev_lmt[0], par_ld->vdev_lmt[1], par_ld->freq_lmt[0], par_ld->freq_lmt[1]);
+        printf(" LD%d:\n", ldx+1);
+        printf("ulevel=%d\n", par_ld->ulevel);
+        printf("connect_type=%d\n", par_ld->connect_type);
+        printf("pt=%d,%d\n", par_ld->pt[0], par_ld->pt[1]);
+        printf("ct=%d,%d\n", par_ld->ct[0], par_ld->ct[1]);
+        printf("vdev_lmt=%d,%d\n", par_ld->vdev_lmt[0], par_ld->vdev_lmt[1]);
+        printf("unblnc_lmt=%d\n", par_ld->unblnc_lmt);
+        printf("negcmp_lmt=%d\n", par_ld->negcmp_lmt);
+        printf("freq_lmt=%d,%d\n", par_ld->freq_lmt[0], par_ld->freq_lmt[1]);
+        printf("pst_lmt=%d, plt_lmt=%d\n", par_ld->pst_lmt, par_ld->plt_lmt);
+        printf("ulmt_type=%d\n", par_ld->ulmt_type);
+        printf("fluct_en=%d, fluct_db=%d\n", par_ld->fluct_en, par_ld->fluct_db);
+        printf("capacity=%g,%g,%g\n", par_ld->capacity[0], par_ld->capacity[1], par_ld->capacity[2]);
+        printf("evnt_en=%d\n", par_ld->evnt_en);
+        printf("rvc_en=%d\n", par_ld->rvc_en);
+        printf("evnt_limit=%d,%d,%d\n", par_ld->evnt_limit[0], par_ld->evnt_limit[1], par_ld->evnt_limit[2]);
+        printf("rvc_lmt=%d\n", par_ld->rvc_lmt);
+        printf("dc_topo=%d\n", par_ld->dc_topo);
+        printf("ac_dc=%d\n", par_ld->ac_dc);
+        printf("evnt_rate_lmt=%d,%d\n", par_ld->evnt_rate_lmt[0], par_ld->evnt_rate_lmt[1]);
+        printf("evnt_rate_en=%d\n", par_ld->evnt_rate_en);
+        printf("attntr=%d\n", par_ld->attntr);
+        printf("ievnt_limit=%d\n", par_ld->ievnt_limit);
+        printf("ievnt_rate_lmt=%d\n", par_ld->ievnt_rate_lmt);
+        printf("ievnt_en=%d\n", par_ld->ievnt_en);
+        printf("ievnt_rate_en=%d\n", par_ld->ievnt_rate_en);
+        printf("ilmt_type=%d\n", par_ld->ilmt_type);
     } else {    //ParamPhD
         par_phd = (ParamPhD*)resp;
         printf("\n");
@@ -76,6 +101,12 @@ void SetSG(void *par, uint8_t type, uint8_t ldx)
         par_ld->vdev_lmt[1] = 65;
         par_ld->freq_lmt[0] = 195;
         par_ld->freq_lmt[1] = 205;
+        //par_ld->dc_topo = 0;
+        //par_ld->attntr = 0;
+        par_ld->ievnt_limit = 1190;
+        par_ld->ievnt_rate_lmt = 271;
+        par_ld->ievnt_en = 1;
+        par_ld->ievnt_rate_en = 1;
         printf(" LD%d\n", ldx+1);
     } else {    //ParamPhD
         sz = sizeof(ParamPhD);
@@ -89,29 +120,39 @@ void SetSG(void *par, uint8_t type, uint8_t ldx)
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2) {
+        printf("Usage: %s LDx\n\n", argv[0]);
+        return 1;
+    }
+    uint8_t ldx;
+    sscanf(argv[1], "%hhd", &ldx);
+
     pshmem_ = InitShmSvr61850(); //Create share memory and initialize.
     printf("sizeof(ParamPhD)=%d, sizeof(SG4LD)=%d\n", sizeof(ParamPhD), sizeof(SG4LD));
-
-    SGCBInfo sgcb_info;
-    ParamPhD par_phd;
-    SG4LD par_ld;
-    uint8_t ldx = 0;
     
     //Get SG state
-    shm_SendCmd(pshmem_, kInitSGCB, NULL, 0, &sgcb_info);
-    printf("SGCB:%d;%d,%d;%d,%d\n", sgcb_info.tol, sgcb_info.act, sgcb_info.edt, sgcb_info.ld_act, sgcb_info.ld_edt);
+    struct {
+        uint8_t tol;    //Total number of SG
+        uint8_t sg[4];  //SG parameter. [0-1]:active sg & edit sg of phydev(LD0); 1~
+                        //[2-3]: active sg, edit sg of LD/LD1,LD2...; 1~
+    } sgbuf;
+    shm_SendCmd(pshmem_, kInitSGCB, NULL, 0, &sgbuf);
+    printf("SGTol:%d; PhD(act,edt):%d,%d; LD(act,edt):%d,%d\n",
+            sgbuf.tol, sgbuf.sg[0], sgbuf.sg[1], sgbuf.sg[2], sgbuf.sg[3]);
 
+    ParamPhD par_phd;
+    SG4LD par_ld;
     //Select active SG
-    SelectSG(&par_phd, 0, 0, sgcb_info.act, 0);     //ParamPhD, active SG
-    SelectSG(&par_ld, 1, 0, sgcb_info.ld_act, ldx);   //SG4LD, active SG for LDx
+    /*SelectSG(&par_phd, 0, 0, sgbuf.sg[0], 0);     //ParamPhD, active SG
+    SelectSG(&par_ld, 1, 0, sgbuf.sg[2], ldx);   //SG4LD, active SG for LDx */
 
     //Select edit SG
-    //SelectSG(&par_phd, 0, 1, sgcb_info.act, 0);     //ParamPhD, set edit SG to active SG
-    //SelectSG(&par_ld, 1, 1, sgcb_info.ld_act, ldx);   //SG4LD, set edit SG to active SG for LDx
+    SelectSG(&par_phd, 0, 1, sgbuf.sg[0], 0);     //ParamPhD, set edit SG to active SG
+    SelectSG(&par_ld, 1, 1, sgbuf.sg[2], ldx);   //SG4LD, set edit SG to active SG for LDx
 
     //Set SG
-    SetSG(&par_ld, 1, ldx);     //ParamPhD, set SG for LDx
-    SelectSG(&par_ld, 1, 1, sgcb_info.ld_act, ldx);   //SG4LD, active SG for LDx
+    SetSG(&par_ld, 1, ldx);     //set edit SG4LD
+    SelectSG(&par_ld, 1, 1, sgbuf.sg[3], ldx);   //SG4LD, get edit SG for LDx */
 
     FreeShareMem(pshmem_);
 }

@@ -32,7 +32,7 @@ typedef enum {
     kAlmOddHRU, KAlmEvnHRU,     //奇次、偶次谐波含有率
     kAlmVLdintlimt,             //长期电压中断
     kAlmIUnblc,                 //电流不平衡
-    kAlmINegseq,                 //负序电流
+    kAlmINegseq,                //负序电流
     kAlmTpEnd
 } AlmType;
 
@@ -47,7 +47,7 @@ typedef enum {
 
 typedef struct {
   	uint16_t version;       //The version of definition of this struct
-	uint8_t ulevel;         //voltage level. 0=380V, 1=6kV, 2=10kV, 3=35kV, 4=110kV, 5=220kV, 6=330kV, 7=500kV
+	uint8_t ulevel;         //voltage level. 0=380V, 1=6kV, 2=10kV, 3=35kV, 4=66kV, 5=110kV, 6=220kV, 7=330kV, 8=500kV
 	uint8_t connect_type;   //voltage connect type. 0=wye, 1=delta
     uint32_t pt[2];  //Potential Transformer. [0-1]:primary,secondary. unit:V
     uint32_t ct[2];  //Current Transformer.   [0-1]:primary,secondary. unit:A
@@ -167,7 +167,7 @@ typedef struct {
     float watt;     //Power. unit:kw
     float amp;      //DC current rms. unit:A
     float vol;      //DC voltage rms. unit:V
-    float vdev;     //voltage deviation. unit:%.
+    float vdev[2];  //voltage deviation, unit:%.  [0-1]:under,over. map to model VDevUnd,VDevOvr
     float ampavg;   //DC current average. unit:A
     float volavg;   //DC voltage average. unit:V
     uint16_t q;     //Quality
@@ -177,12 +177,14 @@ typedef struct {
     time_t time;
     time_t hz_time;
     float hz;           //unit:Hz
-    float hzdev;        //Frequency deviation. unit:Hz
-    float a_mag[3];     //current rms. [0-2]:A-C. unit:A
-    float phv_mag[3];   //voltage rms for phase to neutral. [0-2]:A-C. unit:V
-    float ppv_mag[3];   //voltage rms for phase to phase. [0-2]:AB-CA. unit:V
-    float phvdev[3];    //voltage deviation for phase to neutral. [0-2]:A-C. unit:%
-    float ppvdev[3];    //voltage deviation for phase to phase. [0-2]:AB-CA. unit:%
+    float hzdev;        //Frequency deviation, unit:Hz
+    float a_mag[3];     //current rms, unit:A. [0-2]:A-C. 
+    float phv_mag[3];   //voltage rms for phase to neutral, unit:V. [0-2]:A-C. 
+    float ppv_mag[3];   //voltage rms for phase to phase, unit:V. [0-2]:AB-CA.
+    float phvdev[3];    //voltage deviation for phase to neutral, unit:%. [0-2]:A-C;
+    float ppvdev[3];    //voltage deviation for phase to phase, unit:%. [0-2]:AB-CA;
+    float vdev[3][2];   //voltage deviation for phase to neutral, unit:%. [0-2]:A-C; [0-1]:under,over
+                        //map to model VDevUnd,VDevOvr
     //power
     float w[4];         //A-C,all. unit:kW
     float var[4];       //A-C,all. unit:kvar
