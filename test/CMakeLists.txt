@@ -1,9 +1,11 @@
 # define the executable target
 set (EXE_TARGET "tst_shmem")
 
-add_sources(main.cpp)
+add_sources(main.cpp parse_optn_shmem.cpp)
 include_directories (../common ../61850)
-include_directories (../../../emctrl/common/config)
+set(COMMON_PATH "../../../emctrl/common")
+include_directories (${COMMON_PATH}/config)
+include(${COMMON_PATH}/parse_optn/CMakeLists.txt)
 
 add_library(shmemtst STATIC IMPORTED)
 set_property(TARGET shmemtst PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/common/libshmem.a)
